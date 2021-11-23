@@ -25,5 +25,15 @@ distance( PhraseA, PhraseB, Distance ) :-
  */
 resoudre( Nom, K ) :-
 	consult( Nom ),
-	% vos appels de prédicats ici pour le reste du programme.
-    .
+	creerGraphe().
+
+creerGraphe() :-
+	p(Id, Mots),
+	assertz(graphe(p(Id, Mots), 0, 0)).
+
+:-dynamic graphe/3.
+
+
+
+	
+    
