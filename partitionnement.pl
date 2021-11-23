@@ -1,3 +1,6 @@
+% Path = "E:/Depot_Git/inf6120/inf6120-tp2/".
+
+:-dynamic sommet/2, arc/3, compteur/1, cible/1.
 
 /**
  * Calcul la distance entre deux phrases.
@@ -25,13 +28,40 @@ distance( PhraseA, PhraseB, Distance ) :-
  */
 resoudre( Nom, K ) :-
 	consult( Nom ),
-	creerGraphe().
+	init_teardown(K).
 
-creerGraphe() :-
-	p(Id, Mots),
-	assertz(graphe(p(Id, Mots), 0, 0)).
+affiche :-
+	cible(S), write(S),nl,
+	getSommets(Sommets),
+	forall(member(Sommet, Sommets), (write(Sommet), nl )).
 
-:-dynamic graphe/3.
+init_teardown(Cible) :-
+	setup_call_cleanup(
+		initAll(Cible), 
+		affiche,
+		teardownAll
+	).
+
+initAll(Cible) :-
+	asserta(cible(Cible)),
+	initSommets.
+
+
+initSommets :-
+	findall(sommet(Id,[Phrase]), p(Id, Phrase), Sommets),
+	forall(member(Sommet, Sommets), assertz(Sommet)). 
+
+getSommets(Sommets) :-
+	findall(sommet(C, D), sommet(C, D), Sommets).
+	
+
+teardownAll :-
+	retract(cible(A)),
+	abolish(sommet/2),
+	abolish(arc/3).
+
+
+
 
 
 
