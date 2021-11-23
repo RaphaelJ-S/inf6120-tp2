@@ -1,0 +1,5 @@
+?- resoudre( 'exemple.pl', 3 ).
+0.0 : il y aura donc autant de partitions qu il y a de phrase.
+2.3333333333333335 : initialement chaque partition contient une seule phrase.
+9.333333333333334 : une partition est un ensemble de phrases.
+true.
