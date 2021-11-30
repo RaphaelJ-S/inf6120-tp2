@@ -1,6 +1,6 @@
 % "E:/Depot_Git/inf6120/inf6120-tp2/".
 
-:-dynamic sommet/4, arc/3, compteur/1, cible/1, addition/1.
+:-dynamic sommet/4, arc/3, compteur/1, cible/1, addition/1, rep/2.
 
 /**
  * Calcul la distance entre deux phrases.
@@ -89,14 +89,28 @@ ajouterArcs(Sommet, ListeSommets) :-
 phraseType(ListePhrases, PhraseType) :-
 	length(ListePhrases, X),
 	NbrPhrases is X - 1,
+	asserta(rep("", 1001.0)),
 	forall(
 		member(Phrase, ListePhrases),
 		(
 			select(Phrase, ListePhrases, Reste),
 			moyennePhrase(Phrase, Reste, NbrPhrases, Moy),
-			asserta(representante())
+			rep(PhraseTmp, MinTmp),
+			determineMin(rep(PhraseTmp, MinTmp), rep(Phrase, Moy), RepMin),
+			retract(rep(PhraseTmp, MaxTmp)),
+			write(RepMin),nl,
+			asserta(RepMin)
 		)
-	).
+	),
+	retract(rep(PhraseMin, MoyMin)),
+	PhraseType = rep(PhraseMin, MoyMin).
+
+determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+	M1 =< M2,
+	RepMin = rep(P1, M1).
+determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+	M2 < M1,
+	RepMin = rep(P2, M2).
 
 moyennePhrase(Phrase, Reste, NbrPhrases, Moy) :-
 	asserta(addition(0)),
