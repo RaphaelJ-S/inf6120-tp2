@@ -1,11 +1,7 @@
-<<<<<<< HEAD
-PathLaptop = "C:/Users/Brachiosaurus/GitProjets/INF6120/inf6120-tp2/"
-=======
 % "E:/Depot_Git/inf6120/inf6120-tp2/".
 
 :-dynamic sommet/4, arc/3, compteur/1, cible/1, addition/1, rep/2.
 
->>>>>>> e6a24bd83aed4eb0c77ab0d795206da9cfc49959
 /**
  * Calcul la distance entre deux phrases.
  * Cette valeur est un point flottant.
@@ -34,7 +30,9 @@ distance( PhraseA, PhraseB, Distance ) :-
 resoudre( Nom, K ) :-
 	consult( Nom ),
 	init_teardown(K).
-
+/**
+ * Affiche les compteurs, les sommet et les arcs.
+ */
 affiche :-
 	cible(S), write(S),nl,
 	compteur(C), write(C), nl,
@@ -43,6 +41,12 @@ affiche :-
 	getArcs(Arcs),
 	afficher(Arcs).
 
+/**
+ * init_teardown(+Cible)
+ * Prédicat principal. Initialise les prédicat, lance les opérations et supprime les prédicats pour exécution future.
+ *
+ * @Cible - Le nombre de phrases voulue.
+ */
 init_teardown(Cible) :-
 	setup_call_cleanup(
 		initAll(Cible), 
@@ -50,25 +54,56 @@ init_teardown(Cible) :-
 		teardownAll
 	).
 
+/**
+ * afficher(+Liste)
+ * Affiche chaque élément d'une liste suivit d'un saut de ligne.
+ *
+ * @Liste - La liste à afficher.
+ */
 afficher(Liste) :-
 	forall(member(Elem, Liste), (write(Elem), nl )).
 
+
+/**
+ * initAll(+Cible)
+ * Partie de l'initialisation des prédicats dynamiques. Initialise les compteurs.
+ *
+ * @Cible - Le nombre de phrases voulue.
+ */
 initAll(Cible) :-
 	asserta(cible(Cible)),
 	asserta(compteur(0)),
 	initSommets,
 	initArcs.
 
+/**
+ * getSommets(-Sommets)
+ * Retourne une liste de toutes les structures sommet/3.
+ *
+ * @Sommets - Une liste contenant des éléments sommet/3.
+ */
 getSommets(Sommets) :-
 	findall(sommet(A, B, C, D), sommet(A, B, C, D), Sommets).
 
+/**
+ * getArcs(-Arcs)
+ * Retourne une liste de toutes les structures arc/3.
+ *
+ * @Arcs - Une liste contenant des éléments arc/3.
+ */
 getArcs(Arcs) :-
 	findall(arc(A,B,C), arc(A,B,C), Arcs).
 
+/**
+ * Initialise tous les sommets de départ à partir des structures p/2. 
+ */
 initSommets :-
 	findall(sommet(Id,[Phrase], Phrase, 0.0), p(Id, Phrase), Sommets),
 	forall(member(Sommet, Sommets), assertz(Sommet)). 
 
+/**
+ * Initialise tous les arcs de départ à partir des sommets de départ. Fait un produit cartésien des sommets en arcs.
+ */
 initArcs :-
 	getSommets(Sommets),
 	forall(
@@ -79,6 +114,9 @@ initArcs :-
 		)
 	).
 
+/**
+ * 
+ */
 ajouterArcs(Sommet, ListeSommets) :-
 	forall(
 		member(Bout, ListeSommets),
@@ -102,7 +140,6 @@ phraseType(ListePhrases, PhraseType) :-
 			rep(PhraseTmp, MinTmp),
 			determineMin(rep(PhraseTmp, MinTmp), rep(Phrase, Moy), RepMin),
 			retract(rep(PhraseTmp, MaxTmp)),
-			write(RepMin),nl,
 			asserta(RepMin)
 		)
 	),
@@ -141,19 +178,6 @@ teardownAll :-
 	abolish(arc/3).
 
 
-<<<<<<< HEAD
-trouverSommets(findall(sommet(A, B), p(A, B))).
-
-creerGraphe() :-
-	p(Id, Mots),
-	assertz(graphe(p(Id, Mots), 0, 0)).
-
-:-dynamic sommet/2.
-
-:-dynamic arc/2.
-=======
-
->>>>>>> e6a24bd83aed4eb0c77ab0d795206da9cfc49959
 
 
 
