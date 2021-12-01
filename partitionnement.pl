@@ -1,4 +1,4 @@
-
+PathLaptop = "C:/Users/Brachiosaurus/GitProjets/INF6120/inf6120-tp2/"
 /**
  * Calcul la distance entre deux phrases.
  * Cette valeur est un point flottant.
@@ -27,11 +27,15 @@ resoudre( Nom, K ) :-
 	consult( Nom ),
 	creerGraphe().
 
+trouverSommets(findall(sommet(A, B), p(A, B))).
+
 creerGraphe() :-
 	p(Id, Mots),
 	assertz(graphe(p(Id, Mots), 0, 0)).
 
-:-dynamic graphe/3.
+:-dynamic sommet/2.
+
+:-dynamic arc/2.
 
 
 
