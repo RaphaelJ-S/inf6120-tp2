@@ -1,4 +1,11 @@
+<<<<<<< HEAD
 PathLaptop = "C:/Users/Brachiosaurus/GitProjets/INF6120/inf6120-tp2/"
+=======
+% "E:/Depot_Git/inf6120/inf6120-tp2/".
+
+:-dynamic sommet/4, arc/3, compteur/1, cible/1, addition/1, rep/2.
+
+>>>>>>> e6a24bd83aed4eb0c77ab0d795206da9cfc49959
 /**
  * Calcul la distance entre deux phrases.
  * Cette valeur est un point flottant.
@@ -6,6 +13,7 @@ PathLaptop = "C:/Users/Brachiosaurus/GitProjets/INF6120/inf6120-tp2/"
  * les arguments PhraseA et PhraseB sont des listes de mots (atome).
  * Si les phrases sont trop différente, alors la différence est de 1000.0.
  */
+
 distance( PhraseA, PhraseB, Distance ) :-
 	intersection( PhraseA, PhraseB, MotsCommuns ),
 	length( PhraseA, NbrMotA ),
@@ -25,8 +33,115 @@ distance( PhraseA, PhraseB, Distance ) :-
  */
 resoudre( Nom, K ) :-
 	consult( Nom ),
-	creerGraphe().
+	init_teardown(K).
 
+affiche :-
+	cible(S), write(S),nl,
+	compteur(C), write(C), nl,
+	getSommets(Sommets),
+	afficher(Sommets),
+	getArcs(Arcs),
+	afficher(Arcs).
+
+init_teardown(Cible) :-
+	setup_call_cleanup(
+		initAll(Cible), 
+		affiche,
+		teardownAll
+	).
+
+afficher(Liste) :-
+	forall(member(Elem, Liste), (write(Elem), nl )).
+
+initAll(Cible) :-
+	asserta(cible(Cible)),
+	asserta(compteur(0)),
+	initSommets,
+	initArcs.
+
+getSommets(Sommets) :-
+	findall(sommet(A, B, C, D), sommet(A, B, C, D), Sommets).
+
+getArcs(Arcs) :-
+	findall(arc(A,B,C), arc(A,B,C), Arcs).
+
+initSommets :-
+	findall(sommet(Id,[Phrase], Phrase, 0.0), p(Id, Phrase), Sommets),
+	forall(member(Sommet, Sommets), assertz(Sommet)). 
+
+initArcs :-
+	getSommets(Sommets),
+	forall(
+		member(Sommet, Sommets),
+		(
+			select(Sommet,Sommets, Reste),
+			ajouterArcs(Sommet, Reste)
+		)
+	).
+
+ajouterArcs(Sommet, ListeSommets) :-
+	forall(
+		member(Bout, ListeSommets),
+		(
+			sommet(IdS,_, RepA, _) = Sommet,
+			sommet(IdB,_, RepB, _) = Bout,
+			distance(RepA, RepB, Distance),
+			assertz(arc(IdS, IdB, Distance))
+		)
+	).
+
+phraseType(ListePhrases, PhraseType) :-
+	length(ListePhrases, X),
+	NbrPhrases is X - 1,
+	asserta(rep("", 1001.0)),
+	forall(
+		member(Phrase, ListePhrases),
+		(
+			select(Phrase, ListePhrases, Reste),
+			moyennePhrase(Phrase, Reste, NbrPhrases, Moy),
+			rep(PhraseTmp, MinTmp),
+			determineMin(rep(PhraseTmp, MinTmp), rep(Phrase, Moy), RepMin),
+			retract(rep(PhraseTmp, MaxTmp)),
+			write(RepMin),nl,
+			asserta(RepMin)
+		)
+	),
+	retract(rep(PhraseMin, MoyMin)),
+	PhraseType = rep(PhraseMin, MoyMin).
+
+determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+	M1 =< M2,
+	RepMin = rep(P1, M1).
+determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+	M2 < M1,
+	RepMin = rep(P2, M2).
+
+moyennePhrase(Phrase, Reste, NbrPhrases, Moy) :-
+	asserta(addition(0)),
+	forall(
+		member(Autre, Reste),
+		addition(Phrase, Autre)
+	),
+	retract(addition(A)),
+	Moy is A / NbrPhrases.
+
+addition(Phrase, Autre) :-
+	distance(Phrase, Autre, Distance),
+	retract(addition(A)),
+	C is A + Distance,
+	asserta(addition(C)).
+
+
+
+
+teardownAll :-
+	abolish(cible/1),
+	abolish(compteur/1),
+	abolish(sommet/4),
+	abolish(arc/3).
+
+
+<<<<<<< HEAD
 trouverSommets(findall(sommet(A, B), p(A, B))).
 
 creerGraphe() :-
@@ -36,6 +151,9 @@ creerGraphe() :-
 :-dynamic sommet/2.
 
 :-dynamic arc/2.
+=======
+
+>>>>>>> e6a24bd83aed4eb0c77ab0d795206da9cfc49959
 
 
 
