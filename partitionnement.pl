@@ -30,89 +30,9 @@ distance( PhraseA, PhraseB, Distance ) :-
 resoudre( Nom, K ) :-
 	consult( Nom ),
 	init_teardown(K).
-/**
- * Affiche les compteurs, les sommet et les arcs.
- */
-affiche :-
-	cible(S), write(S),nl,
-	compteur(C), write(C), nl,
-	getSommets(Sommets),
-	afficher(Sommets),
-	getArcs(Arcs),
-	afficher(Arcs).
-
-/**
- * init_teardown(+Cible)
- * Prédicat principal. Initialise les prédicat, lance les opérations et supprime les prédicats pour exécution future.
- *
- * @Cible - Le nombre de phrases voulue.
- */
-init_teardown(Cible) :-
-	setup_call_cleanup(
-		initAll(Cible), 
-		affiche,
-		teardownAll
-	).
-
-/**
- * afficher(+Liste)
- * Affiche chaque élément d'une liste suivit d'un saut de ligne.
- *
- * @Liste - La liste à afficher.
- */
-afficher(Liste) :-
-	forall(member(Elem, Liste), (write(Elem), nl )).
 
 
-/**
- * initAll(+Cible)
- * Partie de l'initialisation des prédicats dynamiques. Initialise les compteurs.
- *
- * @Cible - Le nombre de phrases voulue.
- */
-initAll(Cible) :-
-	asserta(cible(Cible)),
-	asserta(compteur(0)),
-	initSommets,
-	initArcs.
 
-/**
- * getSommets(-Sommets)
- * Retourne une liste de toutes les structures sommet/3.
- *
- * @Sommets - Une liste contenant des éléments sommet/3.
- */
-getSommets(Sommets) :-
-	findall(sommet(A, B, C), sommet(A, B, C), Sommets).
-
-/**
- * getArcs(-Arcs)
- * Retourne une liste de toutes les structures arc/3.
- *
- * @Arcs - Une liste contenant des éléments arc/3.
- */
-getArcs(Arcs) :-
-	findall(arc(A,B,C), arc(A,B,C), Arcs).
-
-/**
- * Initialise tous les sommets de départ à partir des structures p/2. 
- */
-initSommets :-
-	findall(sommet(Id,[Phrase], rep(Phrase, 0.0)), p(Id, Phrase), Sommets),
-	forall(member(Sommet, Sommets), assertz(Sommet)). 
-
-/**
- * Initialise tous les arcs de départ à partir des sommets de départ. Fait un produit cartésien des sommets en arcs.
- */
-initArcs :-
-	getSommets(Sommets),
-	forall(
-		member(Sommet, Sommets),
-		(
-			select(Sommet,Sommets, Reste),
-			ajouterArcs(Sommet, Reste)
-		)
-	).
 
 /**
  * ajouterArcs(+Sommet, +ListeSommets)
@@ -157,6 +77,50 @@ phraseType(ListePhrases, PhraseType) :-
 	),
 	retract(rep(PhraseMin, MoyMin)),
 	PhraseType = rep(PhraseMin, MoyMin).
+
+/**
+ * Prédicat d'élimination de sommets.
+ */
+fusionnerArcs(NvId, NvPhrases) :-
+	getArcs(Arcs),
+	trouverMin(Arcs, Min),
+	arc(P1,P2,D1) = Min,
+	arc(P2, P1, D1) = Bout,
+	retract(sommet(P1, Phrases1, _)),
+	retract(sommet(P2, Phrases2, _)),
+	append(Phrases1, Phtases2, NvPhrases),
+	enleverArcs(Min).
+	
+
+
+
+
+enleverArcs(Arc) :-
+	arc(P1, P2, D1) = Arc,
+	retract(arc(P1, Fin, _)),
+	retract(arc(P2, Fin, _)),
+	retract(arc(Debut, P1, _)),
+	retract(arc(Debut, P2, _)),
+	fail.
+	
+/**
+ * trouverMin(+Liste, -Min)
+ * Retourne le plus petit arc d'une liste d'arcs.
+ * 
+ * @Liste - Une liste d'arc/3.
+ * @Min - L'arc/3 ayant la distance la plus petite.
+ */
+trouverMin([X,Y|XS], Min):-
+	X = arc(P1,P2,D1),
+	Y = arc(P3, P4, D2),
+	D1 =< D2,
+	trouverMin([X|XS], Min).
+trouverMin([X,Y|XS], Min):-
+	X = arc(P1,P2,D1),
+	Y = arc(P3, P4, D2),
+	D1 > D2,
+	trouverMin([Y|XS], Min).
+trouverMin([X], X).
 
 /**
  * determineMin(+rep(P1,M1), +rep(P2,M2), -RepMin)
@@ -206,7 +170,102 @@ addition(Phrase, Autre) :-
 	C is A + Distance,
 	asserta(addition(C)).
 
+% -------------- Affichages et getter --------------
 
+
+/**
+ * Affiche les compteurs, les sommet et les arcs.
+ */
+affiche :-
+	cible(S), write(S),nl,
+	compteur(C), write(C), nl,
+	getSommets(Sommets),
+	afficher(Sommets),
+	getArcs(Arcs),
+	afficher(Arcs),nl,nl,
+	fusionnerArcs(NvId, NvPhrases); % Il faut maintenant créer le nouveau sommet et les nouveau arcs
+	getArcs(NvArcs),
+	getSommets(NvSommets),
+	afficher(NvArcs),
+	afficher(NvSommets).
+
+
+/**
+ * afficher(+Liste)
+ * Affiche chaque élément d'une liste suivit d'un saut de ligne.
+ *
+ * @Liste - La liste à afficher.
+ */
+afficher(Liste) :-
+	forall(member(Elem, Liste), (write(Elem), nl )).
+
+
+/**
+ * getSommets(-Sommets)
+ * Retourne une liste de toutes les structures sommet/3.
+ *
+ * @Sommets - Une liste contenant des éléments sommet/3.
+ */
+getSommets(Sommets) :-
+	findall(sommet(A, B, C), sommet(A, B, C), Sommets).
+
+/**
+ * getArcs(-Arcs)
+ * Retourne une liste de toutes les structures arc/3.
+ *
+ * @Arcs - Une liste contenant des éléments arc/3.
+ */
+getArcs(Arcs) :-
+	findall(arc(A,B,C), arc(A,B,C), Arcs).
+
+
+% ----------------- Initialisation et teardown ------------
+
+
+/**
+ * init_teardown(+Cible)
+ * Prédicat principal. Initialise les prédicat, lance les opérations et supprime les prédicats pour exécution future.
+ *
+ * @Cible - Le nombre de phrases voulue.
+ */
+init_teardown(Cible) :-
+	setup_call_cleanup(
+		initAll(Cible), 
+		affiche,
+		teardownAll
+	).
+
+/**
+ * initAll(+Cible)
+ * Partie de l'initialisation des prédicats dynamiques. Initialise les compteurs.
+ *
+ * @Cible - Le nombre de phrases voulue.
+ */
+initAll(Cible) :-
+	asserta(cible(Cible)),
+	asserta(compteur(0)),
+	initSommets,
+	initArcs.
+
+/**
+ * Initialise tous les sommets de départ à partir des structures p/2. 
+ */
+initSommets :-
+	findall(sommet(Id,[Phrase], rep(Phrase, 0.0)), p(Id, Phrase), Sommets),
+	forall(member(Sommet, Sommets), assertz(Sommet)). 
+
+/**
+ * Initialise tous les arcs de départ à partir des sommets de départ. Fait un produit cartésien des sommets en arcs.
+ */
+initArcs :-
+	getSommets(Sommets),
+	forall(
+		member(Sommet, Sommets),
+		(
+			select(Sommet,Sommets, Reste),
+			ajouterArcs(Sommet, Reste)
+		)
+	).
 
 /**
  * Efface tous les prédicats de la base de connaissance.
