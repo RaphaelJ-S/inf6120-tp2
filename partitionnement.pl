@@ -11,17 +11,21 @@
  */
 
 distance( PhraseA, PhraseB, Distance ) :-
-	intersection( PhraseA, PhraseB, MotsCommuns ),
-	length( PhraseA, NbrMotA ),
-	length( PhraseB, NbrMotB ),
-	MaxCommun is min( NbrMotA, NbrMotB ),
-	length( MotsCommuns, NbrMotsCommuns ),
-	( ( \+ NbrMotsCommuns =:= 0.0,
-	    Distance is MaxCommun / NbrMotsCommuns );
-	  ( NbrMotsCommuns =:= 0.0,
-	    Distance is 1000.0 )
-	).
+    distanceD( PhraseA, PhraseB, DistanceAB ),
+    distanceD( PhraseB, PhraseA, DistanceBA ),
+    Distance is ( DistanceAB + DistanceBA ) / 2.0.
 
+distanceD( PhraseA, PhraseB, Distance ) :-
+    intersection( PhraseA, PhraseB, MotsCommuns ),
+    length( PhraseA, NbrMotA ),
+    length( PhraseB, NbrMotB ),
+    MaxCommun is min( NbrMotA, NbrMotB ),
+    length( MotsCommuns, NbrMotsCommuns ),
+    ( ( \+ NbrMotsCommuns =:= 0.0,
+        Distance is MaxCommun / NbrMotsCommuns );
+      ( NbrMotsCommuns =:= 0.0,
+        Distance is 1000.0 )
+    ).
 /**
  * Prédicat principal.
  * Ce prédicat charge la base de connaissance contenant le texte à résumer.
@@ -30,9 +34,6 @@ distance( PhraseA, PhraseB, Distance ) :-
 resoudre( Nom, K ) :-
 	consult( Nom ),
 	init_teardown(K).
-
-
-
 
 /**
  * ajouterArcs(+Sommet, +ListeSommets)
@@ -51,7 +52,6 @@ ajouterArcs(Sommet, ListeSommets) :-
 			assertz(arc(IdA, IdB, Distance))
 		)
 	).
-
 
 /**
  * phraseType(+ListePhrase, -PhraseType)
@@ -80,21 +80,56 @@ phraseType(ListePhrases, PhraseType) :-
 
 /**
  * Prédicat d'élimination de sommets.
+ * fusionnerSommets(-Sommet)
+ *
+ * Supprime le plus petit arc et tous les arcs connectés aux sommets du plus petit arc.
+ * Modifie la base de donnée avec un nouveau sommet/3 qui est la fusion des deux sommets 
+ * et le retourne.
+ *
+ * @Sommet - le nouveau sommet/3
  */
-fusionnerArcs(NvId, NvPhrases) :-
+fusionnerSommets(Sommet) :-
 	getArcs(Arcs),
 	trouverMin(Arcs, Min),
-	arc(P1,P2,D1) = Min,
-	arc(P2, P1, D1) = Bout,
+	arc(P1,P2,_) = Min,
+	arc(P2, P1, _) = Bout,
 	retract(sommet(P1, Phrases1, _)),
 	retract(sommet(P2, Phrases2, _)),
-	append(Phrases1, Phtases2, NvPhrases),
-	enleverArcs(Min).
+	append(Phrases1, Phrases2, NvPhrases),
+	phraseType(NvPhrases, PhraseType),
+	Sommet = sommet(P1, NvPhrases, PhraseType),
+	!,
+	\+ enleverArcs(Min),
+	assertz(Sommet),
+	actualiserArcs(Sommet).
 	
+/**
+ * actualiserArcs(+Sommet)
+ *
+ * Mets à jours la base de connaissances pour inclure les arcs du nouveau @Sommet
+ * vers tous les autres sommets et vice-versa.
+ *
+ * @Sommet - Le nouveau sommet/3 à connecter aux autres sommets/3
+ */
+actualiserArcs(Sommet) :-
+	getSommets(Sommets),
+	select(Sommet, Sommets, Reste),
+	!,
+	ajouterArcs(Sommet, Reste),
+	Liste = [Sommet],
+	forall(
+		member(Unit, Reste),
+		ajouterArcs(Unit, Liste)
+	).
 
-
-
-
+/**
+ * enleverArcs(+Arc)
+ *
+ * Supprime de la base de connaissance tous les arc/3 qui partagent un sommet
+ * avec @Arc.
+ *
+ * @Arc - L'arc/3 pour lequel on désire supprimer toutes les connexions des sommets.
+ */
 enleverArcs(Arc) :-
 	arc(P1, P2, D1) = Arc,
 	retract(arc(P1, Fin, _)),
@@ -103,6 +138,7 @@ enleverArcs(Arc) :-
 	retract(arc(Debut, P2, _)),
 	fail.
 	
+
 /**
  * trouverMin(+Liste, -Min)
  * Retourne le plus petit arc d'une liste d'arcs.
@@ -183,7 +219,7 @@ affiche :-
 	afficher(Sommets),
 	getArcs(Arcs),
 	afficher(Arcs),nl,nl,
-	fusionnerArcs(NvId, NvPhrases); % Il faut maintenant créer le nouveau sommet et les nouveau arcs
+	fusionnerSommets(NvSommet),
 	getArcs(NvArcs),
 	getSommets(NvSommets),
 	afficher(NvArcs),
@@ -266,6 +302,7 @@ initArcs :-
 			ajouterArcs(Sommet, Reste)
 		)
 	).
+
 
 /**
  * Efface tous les prédicats de la base de connaissance.
