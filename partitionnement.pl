@@ -279,8 +279,10 @@ init_teardown(Cible) :-
  */
 initAll(Cible) :-
 	asserta(cible(Cible)),
-	asserta(compteur(0)),
 	initSommets,
+	getSommets(ListeSommets),
+	length(ListeSommets, Size),
+	asserta(compteur(Size)),
 	initArcs.
 
 /**
