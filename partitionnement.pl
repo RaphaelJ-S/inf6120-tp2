@@ -123,6 +123,30 @@ actualiserArcs(Sommet) :-
 	).
 
 /**
+ * calculerNombreSommets(-NbrSommets)
+ *
+ * Retourne le nombre de sommets dans la base de connaissances.
+ * 
+ * @NbrSommets - Le nombre de sommets dans la base de connaissances.
+ */
+calculerNombreSommets(NbrSommets) :-
+	getSommets(ListeSommets),
+	length(ListeSommets, NbrSommets).
+
+/**
+ * Vérifie si le nombre de sommets cible a été atteint.
+ */
+aAtteintCible :-
+	cible(A),
+	compteur(B),
+	B =< A.
+
+/**
+ *
+ */
+
+
+/**
  * enleverArcs(+Arc)
  *
  * Supprime de la base de connaissance tous les arc/3 qui partagent un sommet
@@ -220,6 +244,7 @@ affiche :-
 	getArcs(Arcs),
 	afficher(Arcs),nl,nl,
 	fusionnerSommets(NvSommet),
+	aAtteintCible,
 	getArcs(NvArcs),
 	getSommets(NvSommets),
 	afficher(NvArcs),
@@ -280,9 +305,8 @@ init_teardown(Cible) :-
 initAll(Cible) :-
 	asserta(cible(Cible)),
 	initSommets,
-	getSommets(ListeSommets),
-	length(ListeSommets, Size),
-	asserta(compteur(Size)),
+	calculerNombreSommets(NbrSommets),
+	asserta(compteur(NbrSommets)),
 	initArcs.
 
 /**
