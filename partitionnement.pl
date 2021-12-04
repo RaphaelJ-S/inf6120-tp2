@@ -42,6 +42,7 @@ resoudre( Nom, K ) :-
 fusionnerSommets :-
 	aAtteintCible,
 	getArcs(Arcs),
+	getSommets(Som),afficher(Arcs),afficher(Som),nl,nl, % À enlever
 	trouverMin(Arcs, Min),
 	arc(P1,P2,_) = Min,
 	retract(sommet(P1, Phrases1, _)),
@@ -250,10 +251,11 @@ distanceD( PhraseA, PhraseB, Distance ) :-
 % -------------- Affichages et getter --------------
 
 /**
- * Affiche les compteurs, les sommet et les arcs.
+ * Affiche la présentation finale.
  */
 affiche :-
 	getSommets(NvSommets),
+	afficher(NvSommets), % À enlever
 	forall(
 		member(Sommet, NvSommets),
 		(
