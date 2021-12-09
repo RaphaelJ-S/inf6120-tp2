@@ -39,9 +39,9 @@ resoudre( Nom, K ) :-
 fusionnerSommets :-
 	aAtteintCible,
 	getArcs(Arcs),
+	getSommets(Som),afficher(Arcs),afficher(Som),nl,nl, % À enlever
 	trouverMin(Arcs, Min),
 	arc(P1,P2,_) = Min,
-	arc(P2, P1, _) = Bout,
 	retract(sommet(P1, Phrases1, _)),
 	retract(sommet(P2, Phrases2, _)),
 	append(Phrases1, Phrases2, NvPhrases),
@@ -73,7 +73,7 @@ phraseType(ListePhrases, PhraseType) :-
 			moyennePhrase(Phrase, Reste, NbrPhrases, Moy),
 			rep(PhraseTmp, MinTmp),
 			determineMin(rep(PhraseTmp, MinTmp), rep(Phrase, Moy), RepMin),
-			retract(rep(PhraseTmp, MaxTmp)),
+			retract(rep(PhraseTmp, _)),
 			asserta(RepMin)
 		)
 	),
@@ -126,7 +126,7 @@ ajouterArcs(Sommet, ListeSommets) :-
  * @Arc - L'arc/3 pour lequel on désire supprimer toutes les connexions des sommets.
  */
 enleverArcs(Arc) :-
-	arc(P1, P2, D1) = Arc,
+	arc(P1, P2, _) = Arc,
 	retract(arc(P1, Fin, _)),
 	retract(arc(P2, Fin, _)),
 	retract(arc(Debut, P1, _)),
@@ -161,13 +161,13 @@ aAtteintCible :-
  * @Min - L'arc/3 ayant la distance la plus petite.
  */
 trouverMin([X,Y|XS], Min):-
-	X = arc(P1,P2,D1),
-	Y = arc(P3, P4, D2),
+	X = arc(_,_,D1),
+	Y = arc(_, _, D2),
 	D1 =< D2,
 	trouverMin([X|XS], Min).
 trouverMin([X,Y|XS], Min):-
-	X = arc(P1,P2,D1),
-	Y = arc(P3, P4, D2),
+	X = arc(_,_,D1),
+	Y = arc(_, _, D2),
 	D1 > D2,
 	trouverMin([Y|XS], Min).
 trouverMin([X], X).
@@ -180,10 +180,10 @@ trouverMin([X], X).
  * @rep(P2, M2) - La deuxième représentante.
  * @RepMin - La plus petites des deux représentantes.
  */
-determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+determineMin(rep(P1, M1), rep(_, M2), RepMin) :-
 	M1 =< M2,
 	RepMin = rep(P1, M1).
-determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
+determineMin(rep(_, M1), rep(P2, M2), RepMin) :-
 	M2 < M1,
 	RepMin = rep(P2, M2).
 
@@ -266,10 +266,11 @@ distanceD( PhraseA, PhraseB, Distance ) :-
 % -------------- Affichages et getter --------------
 
 /**
- * Affiche les compteurs, les sommet et les arcs.
+ * Affiche la présentation finale.
  */
 affiche :-
 	getSommets(NvSommets),
+	afficher(NvSommets), % À enlever
 	forall(
 		member(Sommet, NvSommets),
 		(
@@ -347,7 +348,6 @@ init_teardown(Cible) :-
 initAll(Cible) :-
 	asserta(cible(Cible)),
 	initSommets,
-	calculerNombreSommets(NbrSommets),
 	initArcs.
 
 /**
