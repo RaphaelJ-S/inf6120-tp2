@@ -1,4 +1,3 @@
-% "E:/Depot_Git/inf6120/inf6120-tp2/".
 /**
  * Nom : Jacob-Simard
  * Prénom : Raphaël
@@ -28,7 +27,6 @@ resoudre( Nom, K ) :-
 
 /**
  * Prédicat d'élimination de sommets.
- * fusionnerSommets(-Sommet)
  *
  * Supprime le plus petit arc et tous les arcs connectés aux sommets du plus petit arc.
  * Modifie la base de donnée avec un nouveau sommet/3 qui est la fusion des deux sommets 
@@ -39,7 +37,6 @@ resoudre( Nom, K ) :-
 fusionnerSommets :-
 	aAtteintCible,
 	getArcs(Arcs),
-	getSommets(Som),afficher(Arcs),afficher(Som),nl,nl, % À enlever
 	trouverMin(Arcs, Min),
 	arc(P1,P2,_) = Min,
 	retract(sommet(P1, Phrases1, _)),
@@ -48,11 +45,31 @@ fusionnerSommets :-
 	phraseType(NvPhrases, PhraseType),
 	Sommet = sommet(P1, NvPhrases, PhraseType),
 	!,
+	findall(A, (sommet(A,_,_), \+ A = P1, \+ A = P2), ListeId),
+	trouverNvArcs(P1, P2,ListeId, ListeArcs),
 	\+ enleverArcs(Min),
 	assertz(Sommet),
-	actualiserArcs(Sommet),
+	actualiserArcs(ListeArcs),
 	fusionnerSommets.
 	
+
+/**
+ * trouverNvArcs(+Id1, +Id2,+ListeIdCible, -Liste)
+ *
+ * Retourne une liste d'arc/3 à ajouter suite à une fusion de sommets.
+ *
+ * @Id1 - L'identifiant d'un sommet.
+ * @Id2 - L'identifiant d'un autre sommet.
+ * @ListeIdCible - Liste des autres identifiants de sommets.
+ * @Liste - Liste contenant les arcs à ajouter.
+ */
+trouverNvArcs(Id1,Id2, [IdCible|ListeIdCible], ListeArcs) :-
+	distanceMinimaleEntreArcs(Id1, Id2, IdCible, Distance),
+	trouverNvArcs(Id1, Id2, ListeIdCible, InterListeArcs),
+	append([arc(Id1,IdCible, Distance)], InterListeArcs, ListeArcs).
+trouverNvArcs(Id1,Id2, [IdCible], ListeArcs) :-
+	distanceMinimaleEntreArcs(Id1, Id2, IdCible, Distance),
+	ListeArcs = [arc(Id1, IdCible, Distance)].
 
 
 /**
@@ -81,22 +98,20 @@ phraseType(ListePhrases, PhraseType) :-
 	PhraseType = rep(PhraseMin, MoyMin).
 
 /**
- * actualiserArcs(+Sommet)
+ * actualiserArcs(+ListeArcs)
  *
- * Mets à jours la base de connaissances pour inclure les arcs du nouveau @Sommet
- * vers tous les autres sommets et vice-versa.
+ * Mets à jour la base de connaissance avec tous les nouveaux arc.
  *
- * @Sommet - Le nouveau sommet/3 à connecter aux autres sommets/3
+ * @ListeArcs - Les nouveau arc à ajouter.
  */
-actualiserArcs(Sommet) :-
-	getSommets(Sommets),
-	select(Sommet, Sommets, Reste),
-	!,
-	ajouterArcs(Sommet, Reste),
-	Liste = [Sommet],
+actualiserArcs(ListeArcs) :-
 	forall(
-		member(Unit, Reste),
-		ajouterArcs(Unit, Liste)
+		member(Arc, ListeArcs),
+		(
+			arc(Debut, Fin, Distance) = Arc,
+			assertz(arc(Debut,Fin,Distance)),
+			assertz(arc(Fin,Debut,Distance))
+		)
 	).
 
 /**
@@ -187,23 +202,6 @@ determineMin(rep(_, M1), rep(P2, M2), RepMin) :-
 	M2 < M1,
 	RepMin = rep(P2, M2).
 
-/**
- * distanceEntreSommets(+ListePhrase1, +ListePhrase2, -Distance)
- */
-distanceEntreSommets([X|XS], ListePhrase2, Distance) :-
-	distanceEntreSommets(XS, ListePhrases2, Inter),
-	distanceEntrePhraseEtListe(X, ListePhrase, Sub),
-	Distance is Sub + Inter.
-distanceEntreSommets([X], ListePhrase2, Distance) :-
-	distanceEntrePhraseEtListe(X, ListePhrase2, Distance).
-
-distanceEntrePhraseEtListe(Phrase, Liste, Distance) :-
-	asserta(addition(0)),
-	forall(
-		member(Membre, Liste),
-		addition(Phrase, Membre)
-	),
-	retract(addition(Distance)).
 
 /**
  * moyennePhrase(+Phrase, +Reste, +NbrPhrases, -Moy)
@@ -221,7 +219,7 @@ moyennePhrase(Phrase, Reste, NbrPhrases, Moy) :-
 		addition(Phrase, Autre)
 	),
 	retract(addition(A)),
-	Moy is A / NbrPhrases.
+	Moy is A/NbrPhrases.
 
 /**
  * Prédicat intermédiaire
@@ -263,6 +261,21 @@ distanceD( PhraseA, PhraseB, Distance ) :-
         Distance is 1000.0 )
     ).
 
+
+/**
+ * distanceMinimaleEntreArcs(+SommetId1, +SommetId2, +SommetCible, -DistanceMinimale)
+ * Retourne la distance minimale entre les deux arcs ayant la même terminaison.
+ * 
+ * @SommetId1 - L'identificateur d'un sommet.
+ * @SommetId2 - L'identificateur d'un autre sommet.
+ * @SommetCible - L'identificateur d'un sommet partagé.
+ * @DistanceMinimale - La distance minimale entre les deux arcs.
+ */
+distanceMinimaleEntreArcs(SommetId1, SommetId2, SommetCible, DistanceMinimale) :-
+	arc(SommetId1, SommetCible, Dist1),
+	arc(SommetId2, SommetCible, Dist2),
+	DistanceMinimale is min(Dist1, Dist2).
+
 % -------------- Affichages et getter --------------
 
 /**
@@ -270,7 +283,6 @@ distanceD( PhraseA, PhraseB, Distance ) :-
  */
 affiche :-
 	getSommets(NvSommets),
-	afficher(NvSommets), % À enlever
 	forall(
 		member(Sommet, NvSommets),
 		(
@@ -321,6 +333,9 @@ getSommets(Sommets) :-
  */
 getArcs(Arcs) :-
 	findall(arc(A,B,C), arc(A,B,C), Arcs).
+
+
+	
 
 
 % ----------------- Initialisation et teardown ------------
