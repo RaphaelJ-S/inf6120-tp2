@@ -26,9 +26,6 @@ resoudre( Nom, K ) :-
 	consult( Nom ),
 	init_teardown(K).
 
-
-
-
 /**
  * Prédicat d'élimination de sommets.
  * fusionnerSommets(-Sommet)
@@ -191,6 +188,24 @@ determineMin(rep(P1, M1), rep(P2, M2), RepMin) :-
 	RepMin = rep(P2, M2).
 
 /**
+ * distanceEntreSommets(+ListePhrase1, +ListePhrase2, -Distance)
+ */
+distanceEntreSommets([X|XS], ListePhrase2, Distance) :-
+	distanceEntreSommets(XS, ListePhrases2, Inter),
+	distanceEntrePhraseEtListe(X, ListePhrase, Sub),
+	Distance is Sub + Inter.
+distanceEntreSommets([X], ListePhrase2, Distance) :-
+	distanceEntrePhraseEtListe(X, ListePhrase2, Distance).
+
+distanceEntrePhraseEtListe(Phrase, Liste, Distance) :-
+	asserta(addition(0)),
+	forall(
+		member(Membre, Liste),
+		addition(Phrase, Membre)
+	),
+	retract(addition(Distance)).
+
+/**
  * moyennePhrase(+Phrase, +Reste, +NbrPhrases, -Moy)
  * Retourne la moyenne de @Phrase par rapport aux phrase de @Reste
  *
@@ -225,7 +240,7 @@ addition(Phrase, Autre) :-
 
 
 /**
- * Calcul la distance entre deux phrases.
+ * Calcule la distance entre deux phrases.
  * Cette valeur est un point flottant.
  * distance( +PhraseA, +PhraseB, -Distance ).
  * les arguments PhraseA et PhraseB sont des listes de mots (atome).
